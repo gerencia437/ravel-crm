@@ -855,16 +855,23 @@ function renderCotizaciones() {
   ${leadsConCot.length > 0 ? leadsConCot.map(l => `
     <div class="card">
       <div class="card-header">
-        <span>${l.empresa||'—'}</span>
-        <span style="font-size:11px;color:var(--text-muted)">${l.cotizaciones.length} cotización(es) · ${l.vendedor||''}</span>
+        <span>${l.numero ? l.numero + ' · ' : ''}${l.empresa||'—'}</span>
+        <span style="font-size:11px;color:var(--text-muted)">${l.cotizaciones.length} versión(es) · ${l.vendedor||''}</span>
       </div>
       ${l.cotizaciones.map((c,i) => `
         <div class="row">
           <div style="flex:1">
-            <div style="font-size:12px;font-weight:600">${c.servicio}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
+              <span style="font-size:10px;font-weight:700;background:var(--blue-light);color:var(--blue);padding:2px 8px;border-radius:10px">Cot. #${i+1}</span>
+              <span style="font-size:12px;font-weight:600">${c.servicio}</span>
+            </div>
             <div style="font-size:11px;color:var(--text-muted)">${c.fecha} · ${c.generadoPor}</div>
+            ${c.valor ? `<div style="font-size:12px;font-weight:700;color:var(--green);margin-top:2px">$${Number(c.valor).toLocaleString('es-CO')}</div>` : ''}
           </div>
-          <button class="btn btn-sm btn-blue" style="font-size:11px" onclick="regenerarPDFGuardado('${l.id}',${i})">📥 PDF</button>
+          <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">
+            <button class="btn btn-sm btn-blue" style="font-size:11px" onclick="regenerarPDFGuardado('${l.id}',${i})">📥 PDF</button>
+            <button class="btn btn-sm" style="font-size:11px;background:var(--amber)" onclick="editarCotizacion('${l.id}',${i})">✏️ Editar</button>
+          </div>
         </div>
       `).join('')}
     </div>
@@ -1325,23 +1332,58 @@ window.regenerarCotizacion = function() {
   generarCotizacion();
 };
 
+window.editarCotizacion = function(leadId, idx) {
+  const lead = leads.find(l => l.id === leadId);
+  if (!lead || !lead.cotizaciones?.[idx]) return;
+  const c = lead.cotizaciones[idx];
+
+  $('cotLeadId').value = leadId;
+  $('cotServicio').value = c.servicio || 'Empresarial';
+  $('cotPasajeros').value = lead.capacidad || '';
+  $('cotHorario').value = '';
+  $('cotRuta').value = lead.origen && lead.destino ? `${lead.origen} → ${lead.destino}` : '';
+  $('cotValor').value = c.valor || lead.valorLead || '';
+  $('cotRequisitos').value = '';
+  $('cotPreview').value = c.texto || '';
+  $('cotApiMsg').style.display = 'none';
+
+  // Marcar que estamos editando esta versión
+  $('cotLeadId').dataset.editIdx = idx;
+  $('modalCotizacion').querySelector('h3').textContent = `Editar Cotización #${idx+1}`;
+  $('modalCotizacion').classList.add('open');
+};
+
 window.guardarCotizacionManual = async function() {
   const leadId = $('cotLeadId').value;
   const texto = $('cotPreview').value.trim();
-  const lead = leads.find(l=>l.id===leadId);
+  const lead = leads.find(l => l.id === leadId);
   if (!lead) return;
   if (!texto) { toast('Escribe el texto de la propuesta primero'); return; }
 
   if (!lead.cotizaciones) lead.cotizaciones = [];
-  lead.cotizaciones.push({
+
+  const editIdx = $('cotLeadId').dataset.editIdx;
+  const nuevaCot = {
     servicio: $('cotServicio').value,
     texto,
     valor: $('cotValor').value,
     fecha: new Date().toLocaleDateString('es-CO'),
     generadoPor: currentUser.nombre
-  });
+  };
+
+  if (editIdx !== undefined && editIdx !== '') {
+    // Editar versión existente
+    lead.cotizaciones[parseInt(editIdx)] = nuevaCot;
+    delete $('cotLeadId').dataset.editIdx;
+    $('modalCotizacion').querySelector('h3').textContent = 'Generar Cotización con IA';
+    toast('Cotización actualizada ✅');
+  } else {
+    // Nueva versión
+    lead.cotizaciones.push(nuevaCot);
+    toast(`Cotización #${lead.cotizaciones.length} guardada ✅`);
+  }
+
   await updateDoc(doc(db, 'crm_leads', leadId), { cotizaciones: lead.cotizaciones });
-  toast('Cotización guardada ✅');
   cerrarModal('modalCotizacion');
   renderView();
 };
