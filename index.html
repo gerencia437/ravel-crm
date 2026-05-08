@@ -211,9 +211,9 @@
           <label>Tipo de vehículo</label>
           <select id="leadVehiculo">
             <option value="">Seleccionar</option>
-            <option>Automóvil</option>
+            <option>Renault Duster</option>
             <option>Micro Urvan</option>
-            <option>Master o Mercedes</option>
+            <option>Master o Mercedez</option>
             <option>Buseta</option>
             <option>Bus</option>
           </select>
@@ -863,9 +863,11 @@ function renderCotizaciones() {
           <div style="flex:1">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
               <span style="font-size:10px;font-weight:700;background:var(--blue-light);color:var(--blue);padding:2px 8px;border-radius:10px">Cot. #${i+1}</span>
+              ${c.versiones > 1 ? `<span style="font-size:10px;background:var(--amber-light);color:var(--amber);padding:2px 8px;border-radius:10px;font-weight:600">v${c.versiones}</span>` : ''}
               <span style="font-size:12px;font-weight:600">${c.servicio}</span>
             </div>
             <div style="font-size:11px;color:var(--text-muted)">${c.fecha} · ${c.generadoPor}</div>
+            ${c.fechaOriginal && c.fechaOriginal !== c.fecha ? `<div style="font-size:10px;color:var(--text-muted)">Original: ${c.fechaOriginal} · ${c.historial?.length||0} modificación(es)</div>` : ''}
             ${c.valor ? `<div style="font-size:12px;font-weight:700;color:var(--green);margin-top:2px">$${Number(c.valor).toLocaleString('es-CO')}</div>` : ''}
           </div>
           <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">
@@ -1372,11 +1374,30 @@ window.guardarCotizacionManual = async function() {
   };
 
   if (editIdx !== undefined && editIdx !== '') {
-    // Editar versión existente
-    lead.cotizaciones[parseInt(editIdx)] = nuevaCot;
+    // Guardar versión original en historial antes de modificar
+    const idxNum = parseInt(editIdx);
+    const cotOriginal = lead.cotizaciones[idxNum];
+    
+    // Si no tiene historial, crearlo
+    if (!cotOriginal.historial) cotOriginal.historial = [];
+    cotOriginal.historial.push({
+      texto: cotOriginal.texto,
+      valor: cotOriginal.valor,
+      fecha: cotOriginal.fecha,
+      modificadoPor: cotOriginal.generadoPor
+    });
+
+    // Actualizar con nuevos datos
+    lead.cotizaciones[idxNum] = {
+      ...nuevaCot,
+      historial: cotOriginal.historial,
+      fechaOriginal: cotOriginal.fechaOriginal || cotOriginal.fecha,
+      versiones: (cotOriginal.versiones || 1) + 1
+    };
+
     delete $('cotLeadId').dataset.editIdx;
     $('modalCotizacion').querySelector('h3').textContent = 'Generar Cotización con IA';
-    toast('Cotización actualizada ✅');
+    toast(`Cotización actualizada · v${lead.cotizaciones[idxNum].versiones} ✅`);
   } else {
     // Nueva versión
     lead.cotizaciones.push(nuevaCot);
@@ -1519,6 +1540,16 @@ function generarPDFCotizacion(lead, texto, valor, servicio) {
   toast('PDF descargado ✅');
 }
 
+
+// ── CARACTERÍSTICAS POR VEHÍCULO ──
+const CARACTERISTICAS_VEHICULO = {
+  'Renault Duster': 'Capacidad hasta 4 pasajeros cómodamente ubicados. Amplio espacio para equipaje, aire acondicionado, sillas ergonómicas y confortables, vehículo alto, ideal para zona urbana y rural, excelente desempeño en carretera. Equipado con sistemas de seguridad (airbags, frenos ABS y cinturones de seguridad). Brindamos un servicio puntual, seguro y con conductor profesional, garantizando una experiencia cómoda y confiable durante todo el recorrido.',
+  'Micro Urvan': 'Vehículo con capacidad para 10 a 14 pasajeros. Equipado con sistema de audio y video, pero no cuenta con aire acondicionado ni sillas reclinables. Nuestros conductores se destacan por su trato amable y profesional, asegurando un viaje cómodo y seguro. 🚐✨',
+  'Master o Mercedez': 'Vehículo con capacidad para 15 a 16 pasajeros, diseñado con techo alto para mayor comodidad al ingresar. Equipado con sillas reclinables, aire acondicionado, sistema de audio y video para que disfrutes un viaje confortable. Nuestros conductores se destacan por su excelente trato y profesionalismo, asegurando una experiencia de viaje segura y placentera. 🚐✨',
+  'Buseta': 'Vehículo con capacidad para 20 a 25 pasajeros. Equipado con sillas reclinables, aire acondicionado, sistema de audio y video, ideal para viajes cómodos y agradables. Nuestros conductores, con su trato profesional y cálido, aseguran que disfrutes de un viaje seguro y placentero. 🚍✨',
+  'Bus': 'Vehículo con capacidad para 35 a 40 pasajeros. Equipado con sillas reclinables, aire acondicionado, sistema de audio y video, ideal para viajes cómodos y agradables. Nuestros conductores, con su trato profesional y cálido, aseguran que disfrutes de un viaje seguro y placentero. 🚍✨'
+};
+
 // ── MENSAJE WHATSAPP ──
 window.mensajeWhatsapp = function(leadId) {
   const lead = leads.find(l => l.id === leadId);
@@ -1528,16 +1559,25 @@ window.mensajeWhatsapp = function(leadId) {
 
   const detalles = [
     `📋 *Tipo de servicio:* ${lead.servicio || 'Por definir'}`,
-    lead.vehiculo ? `🚌 *Vehículo:* ${lead.vehiculo}` : null,
+    lead.vehiculo        ? `🚌 *Vehículo:* ${lead.vehiculo}` : null,
     lead.cantidadVehiculos ? `🔢 *Cantidad:* ${lead.cantidadVehiculos} vehículo(s)` : null,
-    lead.capacidad ? `👥 *Pasajeros:* ${lead.capacidad}` : null,
+    lead.capacidad       ? `👥 *Pasajeros:* ${lead.capacidad}` : null,
     (lead.origen && lead.destino) ? `📍 *Ruta:* ${lead.origen} → ${lead.destino}` : null,
-    lead.fechaSalida ? `📅 *Fecha:* ${lead.fechaSalida}${lead.fechaRegreso ? ' al ' + lead.fechaRegreso : ''}` : null,
-    lead.horaInicio ? `🕐 *Hora inicio:* ${lead.horaInicio}${lead.horaRegreso ? '  |  Regreso: ' + lead.horaRegreso : ''}` : null,
-    lead.valorLead ? `💰 *Valor:* $${Number(lead.valorLead).toLocaleString('es-CO')}` : null,
+    lead.fechaSalida     ? `📅 *Fecha:* ${lead.fechaSalida}${lead.fechaRegreso ? ' al ' + lead.fechaRegreso : ''}` : null,
+    lead.horaInicio      ? `🕐 *Hora inicio:* ${lead.horaInicio}${lead.horaRegreso ? '  |  Regreso: ' + lead.horaRegreso : ''}` : null,
+    lead.valorLead       ? `💰 *Valor:* $${Number(lead.valorLead).toLocaleString('es-CO')}` : null,
   ].filter(l => l !== null).join('\n');
 
-  const lineas = `Buen día, *${lead.nombre || 'estimado(a)'}* 👋
+  const caracteristica = lead.vehiculo && CARACTERISTICAS_VEHICULO[lead.vehiculo]
+    ? `\n🔍 *Sobre el vehículo:*\n${CARACTERISTICAS_VEHICULO[lead.vehiculo]}`
+    : '';
+
+  const observacion = lead.notas
+    ? `\n📝 *Observaciones:* ${lead.notas}`
+    : '';
+
+  const lineas =
+`Buen día, *${lead.nombre || 'estimado(a)'}* 👋
 
 Mi nombre es *${currentUser.nombre}*, del equipo comercial de *Transportes Ravel S.A.S.* 🚐
 
@@ -1545,7 +1585,7 @@ Gracias por permitirnos ser parte de su solicitud de transporte. Para nosotros, 
 
 A continuación, compartimos su propuesta:
 
-${detalles}
+${detalles}${observacion}${caracteristica}
 
 En Transportes Ravel trabajamos para brindar un servicio seguro, puntual y humano, cuidando cada detalle para que usted y sus pasajeros viajen con total confianza.
 
