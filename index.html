@@ -129,7 +129,7 @@
         <label>Nombre completo</label>
         <input type="text" id="loginNombre" placeholder="Tu nombre"/>
       </div>
-      <button class="btn" style="width:100%;padding:12px;font-size:14px;font-weight:700;border-radius:10px;margin-top:4px" onclick="doLogin()">Ingresar</button>
+      <button class="btn" style="width:100%;padding:12px;font-size:14px;font-weight:700;border-radius:10px;margin-top:4px" id="btnLogin">Ingresar</button>
     </div>
   </div>
 </div>
@@ -441,6 +441,27 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<script>
+// Binding seguro del login
+document.addEventListener('DOMContentLoaded', function() {
+  var btn = document.getElementById('btnLogin');
+  if (btn) {
+    btn.addEventListener('click', function() {
+      if (typeof window.doLogin === 'function') {
+        window.doLogin();
+      }
+    });
+  }
+  // Enter key en campos de login
+  ['loginCedula','loginNombre'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && typeof window.doLogin === 'function') window.doLogin();
+    });
+  });
+});
+</script>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
