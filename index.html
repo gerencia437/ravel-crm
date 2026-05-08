@@ -248,6 +248,16 @@
       </div>
       <div class="form-grid">
         <div class="form-row">
+          <label>Hora de inicio</label>
+          <input type="time" id="leadHoraInicio"/>
+        </div>
+        <div class="form-row">
+          <label>Hora de regreso</label>
+          <input type="time" id="leadHoraRegreso"/>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
           <label>Valor estimado ($)</label>
           <input type="number" id="leadValor" placeholder="Ej: 4500000"/>
         </div>
@@ -1052,6 +1062,8 @@ window.abrirModalNuevoLead = async function() {
   $('leadDestino').value = '';
   $('leadFechaSalida').value = '';
   $('leadFechaRegreso').value = '';
+  $('leadHoraInicio').value = '';
+  $('leadHoraRegreso').value = '';
   $('leadValor').value = '';
 
   // Generar número automático
@@ -1100,6 +1112,8 @@ window.guardarLead = async function() {
     destino: $('leadDestino').value.trim(),
     fechaSalida: $('leadFechaSalida').value || '',
     fechaRegreso: $('leadFechaRegreso').value || '',
+    horaInicio: $('leadHoraInicio').value || '',
+    horaRegreso: $('leadHoraRegreso').value || '',
     valor: $('cotValor') ? $('cotValor').value || '' : '',
     valorLead: $('leadValor').value || '',
     ts: new Date().getTime()
@@ -1146,6 +1160,8 @@ window.abrirDetalleLead = function(id) {
   $('leadDestino').value = l.destino||'';
   $('leadFechaSalida').value = l.fechaSalida||'';
   $('leadFechaRegreso').value = l.fechaRegreso||'';
+  if($('leadHoraInicio')) $('leadHoraInicio').value = l.horaInicio||'';
+  if($('leadHoraRegreso')) $('leadHoraRegreso').value = l.horaRegreso||'';
   $('leadValor').value = l.valorLead||'';
 
   if (l.numero) {
@@ -1474,6 +1490,8 @@ window.mensajeWhatsapp = function(leadId) {
     lead.cantidadVehiculos ? `🔢 *Cantidad:* ${lead.cantidadVehiculos} vehículo(s)` : null,
     lead.capacidad ? `👥 *Pasajeros:* ${lead.capacidad}` : null,
     (lead.origen && lead.destino) ? `📍 *Ruta:* ${lead.origen} → ${lead.destino}` : null,
+    lead.fechaSalida ? `📅 *Fecha:* ${lead.fechaSalida}${lead.fechaRegreso ? ' al ' + lead.fechaRegreso : ''}` : null,
+    lead.horaInicio ? `🕐 *Hora inicio:* ${lead.horaInicio}${lead.horaRegreso ? '  |  Regreso: ' + lead.horaRegreso : ''}` : null,
     lead.valorLead ? `💰 *Valor:* $${Number(lead.valorLead).toLocaleString('es-CO')}` : null,
   ].filter(l => l !== null).join('\n');
 
