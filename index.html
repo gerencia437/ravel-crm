@@ -220,10 +220,7 @@
         </div>
         <div class="form-row">
           <label>Cantidad de vehículos</label>
-          <select id="leadCantidadVehiculos">
-            <option value="">Seleccionar</option>
-            ${Array.from({length:20},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join('')}
-          </select>
+          <input type="number" id="leadCantidadVehiculos" placeholder="Ej: 2" min="1" max="99"/>
         </div>
       </div>
       <div class="form-grid">
