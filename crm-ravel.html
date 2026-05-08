@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Transporte Ravel — CRM Comercial</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  :root{--green:#0F6E56;--green-dark:#0a5a46;--green-light:#EAF3DE;--green-text:#3B6D11;--red:#A32D2D;--red-light:#FCEBEB;--amber:#BA7517;--amber-light:#FAEEDA;--blue:#185FA5;--blue-light:#E6F1FB;--purple:#6B3FA0;--purple-light:#F0EAFA;--bg:#F7F8FA;--surface:#fff;--border:#E8EAF0;--text:#1a1916;--text-muted:#8892A0;--shadow:0 1px 3px rgba(0,0,0,0.08),0 4px 16px rgba(0,0,0,0.04)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  .app-shell{display:flex;flex-direction:column;min-height:100vh}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+  .topbar-title{font-size:13px;font-weight:600;color:var(--text);flex:1}
+  .topbar-sub{font-size:11px;color:var(--text-muted)}
+  .nav-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+  .nav-bar::-webkit-scrollbar{display:none}
+  .nav-bar button{padding:12px 14px;font-size:12px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--text-muted);border-bottom:2px solid transparent;white-space:nowrap;transition:all 0.15s;font-family:inherit}
+  .nav-bar button.active{color:var(--green);border-bottom-color:var(--green);font-weight:600}
+  .nav-bar button:hover{color:var(--text)}
+  .content-area{flex:1;max-width:800px;width:100%;margin:0 auto;padding:20px 16px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow)}
+  .card-header{padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+  .row{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+  .row:last-child{border-bottom:none}
+  .badge{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .badge.nuevo{background:#E6F1FB;color:#185FA5}
+  .badge.contactado{background:#FAEEDA;color:#BA7517}
+  .badge.visitado{background:#F0EAFA;color:#6B3FA0}
+  .badge.propuesta{background:#EAF3DE;color:#3B6D11}
+  .badge.ganado{background:#0F6E56;color:#fff}
+  .badge.perdido{background:#FCEBEB;color:#A32D2D}
+  input,select,textarea{width:100%;padding:9px 12px;font-size:13px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;transition:border-color 0.15s}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(15,110,86,0.08)}
+  .btn{padding:9px 20px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-weight:600;font-family:inherit;transition:all 0.15s}
+  .btn:hover{background:var(--green-dark);transform:translateY(-1px)}
+  .btn:active{transform:translateY(0)}
+  .btn-sm{padding:6px 14px;font-size:12px}
+  .btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text)}
+  .btn-outline:hover{background:var(--bg);transform:translateY(-1px)}
+  .btn-red{background:var(--red)}
+  .btn-red:hover{background:#8a2020}
+  .btn-blue{background:var(--blue)}
+  .btn-blue:hover{background:#134d8a}
+  .empty{padding:28px;text-align:center;font-size:13px;color:var(--text-muted)}
+  .loading{text-align:center;padding:40px;color:var(--text-muted);font-size:13px}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1916;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:500;z-index:1000;display:none;box-shadow:0 4px 20px rgba(0,0,0,0.2)}
+  .toast.show{display:block;animation:fadeup 0.2s ease}
+  @keyframes fadeup{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+  /* LOGIN */
+  .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f0f7f4 0%,#e8f5f1 50%,#f7f8fa 100%);padding:20px}
+  .login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;max-width:400px;width:100%;overflow:hidden;box-shadow:0 8px 40px rgba(15,110,86,0.12)}
+  .login-head{background:var(--green);padding:36px 28px 28px;text-align:center}
+  .login-head p{font-size:12px;color:rgba(255,255,255,0.75);font-weight:500}
+  .login-body{padding:28px}
+  .login-field{margin-bottom:16px}
+  .login-field label{font-size:12px;font-weight:600;color:#444;display:block;margin-bottom:6px}
+  .login-field input{font-size:14px;padding:11px 14px;border-radius:10px}
+  .login-err{background:var(--red-light);color:var(--red);border-radius:8px;padding:9px 14px;font-size:12px;margin-bottom:14px;display:none;font-weight:500}
+  /* USER CHIP */
+  .user-chip{display:flex;align-items:center;gap:7px;background:var(--green-light);border-radius:20px;padding:4px 12px 4px 4px;font-size:12px;color:var(--green-text);cursor:pointer;font-weight:600}
+  .user-chip .avatar{width:26px;height:26px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+  /* PIPELINE */
+  .pipeline-col{background:var(--bg);border-radius:10px;padding:12px;min-width:160px;flex:1}
+  .pipeline-col .col-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;color:var(--text-muted)}
+  .pipeline-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:all 0.15s;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+  .pipeline-card:hover{border-color:var(--green);transform:translateY(-1px)}
+  .pipeline-card .empresa{font-size:12px;font-weight:600;margin-bottom:2px}
+  .pipeline-card .contacto{font-size:11px;color:var(--text-muted)}
+  /* MODAL */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
+  .modal-bg.open{display:flex}
+  .modal{background:var(--surface);border-radius:16px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)}
+  .modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+  .modal-head h3{font-size:15px;font-weight:700}
+  .modal-body{padding:20px}
+  .modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+  .form-row{margin-bottom:14px}
+  .form-row label{font-size:12px;font-weight:600;color:#444;display:block;margin-bottom:5px}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  /* DASH GRID */
+  .dash-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:16px}
+  @media(min-width:600px){.dash-grid{grid-template-columns:repeat(4,1fr)}}
+  .dash-kpi{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+  .dash-kpi .label{font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px}
+  .dash-kpi .value{font-size:28px;font-weight:700;line-height:1}
+  .dash-kpi .sub{font-size:11px;margin-top:4px;color:var(--text-muted)}
+  /* FUNNEL */
+  .funnel-step{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+  .funnel-step:last-child{border-bottom:none}
+  .funnel-label{font-size:12px;font-weight:600;width:100px;flex-shrink:0}
+  .funnel-bar-wrap{flex:1;background:#F0F2F5;border-radius:4px;height:8px}
+  .funnel-bar{height:100%;border-radius:4px;transition:width 0.4s}
+  .funnel-count{font-size:12px;font-weight:700;width:30px;text-align:right}
+  .funnel-pct{font-size:11px;color:var(--text-muted);width:40px;text-align:right}
+  /* COTIZACION PREVIEW */
+  .cotizacion-preview{background:#f8f9fa;border:1px solid var(--border);border-radius:10px;padding:20px;font-size:13px;line-height:1.6;white-space:pre-wrap;min-height:120px}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  /* ACTIVIDADES */
+  .act-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+  .act-item:last-child{border-bottom:none}
+  .act-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+  .act-icon.llamada{background:#E6F1FB}
+  .act-icon.visita{background:var(--green-light)}
+  .act-icon.propuesta{background:#F0EAFA}
+  .act-icon.nota{background:var(--amber-light)}
+  .bar-wrap{background:#F0F2F5;border-radius:4px;height:6px;overflow:hidden;margin-top:4px}
+  .bar{height:100%;background:var(--green);border-radius:4px;transition:width 0.4s ease}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-card">
+    <div class="login-head">
+      <div style="font-size:32px;font-weight:800;color:#fff;letter-spacing:-1px;margin-bottom:8px">Ravel</div>
+      <p>CRM Comercial</p>
+    </div>
+    <div class="login-body">
+      <div class="login-err" id="loginErr"></div>
+      <div class="login-field">
+        <label>Cédula</label>
+        <input type="text" id="loginCedula" placeholder="Número de cédula" inputmode="numeric"/>
+      </div>
+      <div class="login-field">
+        <label>Nombre completo</label>
+        <input type="text" id="loginNombre" placeholder="Tu nombre"/>
+      </div>
+      <button class="btn" style="width:100%;padding:12px;font-size:14px;font-weight:700;border-radius:10px;margin-top:4px" onclick="doLogin()">Ingresar</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app-shell" id="appWrap" style="display:none">
+  <div class="topbar">
+    <div style="font-size:18px;font-weight:800;color:var(--green);letter-spacing:-0.5px">Ravel</div>
+    <div style="width:1px;height:20px;background:var(--border)"></div>
+    <div class="topbar-title">CRM Comercial</div>
+    <div class="topbar-sub" id="subtitulo"></div>
+    <div class="user-chip" onclick="cerrarSesion()">
+      <div class="avatar" id="userAvatar">U</div>
+      <span id="userNombreChip">Usuario</span>
+    </div>
+  </div>
+  <div class="nav-bar" id="navBar"></div>
+  <div class="content-area">
+    <div id="content"><div class="loading">Cargando...</div></div>
+  </div>
+</div>
+
+<!-- MODAL LEAD -->
+<div class="modal-bg" id="modalLead">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalLeadTitulo">Nuevo Lead</h3>
+      <button onclick="cerrarModal('modalLead')" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted)">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="leadId"/>
+      <div class="form-grid">
+        <div class="form-row">
+          <label>Nombre contacto *</label>
+          <input type="text" id="leadNombre" placeholder="Nombre completo"/>
+        </div>
+        <div class="form-row">
+          <label>Empresa / Institución *</label>
+          <input type="text" id="leadEmpresa" placeholder="Ej: Colegio Benedictinos"/>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <label>Teléfono / WhatsApp</label>
+          <input type="text" id="leadTelefono" placeholder="Ej: 300 123 4567"/>
+        </div>
+        <div class="form-row">
+          <label>Email</label>
+          <input type="email" id="leadEmail" placeholder="correo@empresa.com"/>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <label>Fuente del lead</label>
+          <select id="leadFuente">
+            <option>WhatsApp</option>
+            <option>Google Ads</option>
+            <option>Meta/Instagram</option>
+            <option>Referido</option>
+            <option>Llamada directa</option>
+            <option>Visita directa</option>
+            <option>Otro</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Tipo de servicio</label>
+          <select id="leadServicio">
+            <option>Transporte escolar</option>
+            <option>Transporte corporativo</option>
+            <option>Transporte industrial</option>
+            <option>Evento especial</option>
+            <option>Por definir</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <label>Estado</label>
+          <select id="leadEstado">
+            <option value="nuevo">Nuevo</option>
+            <option value="contactado">Contactado</option>
+            <option value="visitado">Visitado</option>
+            <option value="propuesta">Propuesta enviada</option>
+            <option value="ganado">Ganado ✅</option>
+            <option value="perdido">Perdido ❌</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Vendedor asignado</label>
+          <select id="leadVendedor"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Notas</label>
+        <textarea id="leadNotas" rows="3" placeholder="Detalles del lead, necesidades, observaciones..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="cerrarModal('modalLead')">Cancelar</button>
+      <button class="btn btn-sm" onclick="guardarLead()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ACTIVIDAD -->
+<div class="modal-bg" id="modalActividad">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Registrar Actividad</h3>
+      <button onclick="cerrarModal('modalActividad')" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted)">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="actLeadId"/>
+      <div class="form-grid">
+        <div class="form-row">
+          <label>Tipo de actividad</label>
+          <select id="actTipo">
+            <option value="llamada">📞 Llamada</option>
+            <option value="visita">🤝 Visita</option>
+            <option value="propuesta">📄 Propuesta enviada</option>
+            <option value="nota">📝 Nota</option>
+            <option value="whatsapp">💬 WhatsApp</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Resultado</label>
+          <select id="actResultado">
+            <option>Interesado</option>
+            <option>No contesta</option>
+            <option>Pide cotización</option>
+            <option>Solicita visita</option>
+            <option>No interesado</option>
+            <option>Precio alto</option>
+            <option>Ya tiene proveedor</option>
+            <option>Pendiente respuesta</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Notas de la actividad</label>
+        <textarea id="actNotas" rows="3" placeholder="¿Qué pasó? ¿Qué dijo el cliente?"></textarea>
+      </div>
+      <div class="form-row">
+        <label>Nuevo estado del lead</label>
+        <select id="actNuevoEstado">
+          <option value="">— No cambiar —</option>
+          <option value="contactado">Contactado</option>
+          <option value="visitado">Visitado</option>
+          <option value="propuesta">Propuesta enviada</option>
+          <option value="ganado">Ganado ✅</option>
+          <option value="perdido">Perdido ❌</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="cerrarModal('modalActividad')">Cancelar</button>
+      <button class="btn btn-sm" onclick="guardarActividad()">Guardar actividad</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL COTIZACION -->
+<div class="modal-bg" id="modalCotizacion">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Generar Cotización con IA</h3>
+      <button onclick="cerrarModal('modalCotizacion')" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted)">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cotLeadId"/>
+      <div class="form-grid">
+        <div class="form-row">
+          <label>Tipo de servicio</label>
+          <select id="cotServicio">
+            <option>Transporte escolar</option>
+            <option>Transporte corporativo</option>
+            <option>Transporte industrial</option>
+            <option>Evento especial</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Pasajeros aprox.</label>
+          <input type="number" id="cotPasajeros" placeholder="Ej: 45"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Horario / Frecuencia</label>
+        <input type="text" id="cotHorario" placeholder="Ej: Lunes a viernes, 6:30am - 8:00am y 5:00pm - 6:30pm"/>
+      </div>
+      <div class="form-row">
+        <label>Ruta / Sector</label>
+        <input type="text" id="cotRuta" placeholder="Ej: Envigado - Sede Laureles"/>
+      </div>
+      <div class="form-row">
+        <label>Valor mensual a cotizar ($)</label>
+        <input type="number" id="cotValor" placeholder="Ej: 4500000"/>
+      </div>
+      <div class="form-row">
+        <label>Requisitos especiales</label>
+        <textarea id="cotRequisitos" rows="2" placeholder="GPS, aire acondicionado, conductor bilingüe..."></textarea>
+      </div>
+      <div class="form-row">
+        <label>Texto de la propuesta</label>
+        <textarea id="cotPreview" rows="7" placeholder="Escribe aquí el texto de la propuesta, o usa el botón ✨ Generar con IA para redactarla automáticamente..."></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <button class="btn btn-blue btn-sm" onclick="descargarPDF()">📥 Descargar PDF</button>
+          <button class="btn btn-sm" id="btnGenerarCot" onclick="generarCotizacion()" title="Requiere API key de Anthropic">✨ Generar con IA</button>
+        </div>
+        <div id="cotApiMsg" style="display:none;margin-top:8px;font-size:11px;color:var(--amber);background:var(--amber-light);padding:8px 12px;border-radius:8px">
+          ⚠️ Para usar IA necesitas agregar tu API key de Anthropic en el código. Por ahora escribe el texto manualmente.
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="cerrarModal('modalCotizacion')">Cerrar</button>
+      <button class="btn btn-sm" onclick="guardarCotizacionManual()">💾 Guardar cotización</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAmfFabMCKEDvZNdpIYA_HpIMAurpT_izg",
+  authDomain: "transporte-ravel.firebaseapp.com",
+  projectId: "transporte-ravel",
+  storageBucket: "transporte-ravel.firebasestorage.app",
+  messagingSenderId: "349820780179",
+  appId: "1:349820780179:web:e330d14a09d44f63019766"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ── ESTADO GLOBAL ──
+let currentUser = null;
+let VIEW = 'Dashboard';
+let leads = [];
+let actividades = [];
+let usuariosLista = [];
+let leadSeleccionado = null;
+
+const NAVS_ADMIN = ['Dashboard','Leads','Pipeline','Clientes','Cotizaciones','Reportes','Usuarios'];
+const NAVS_VENDEDOR = ['Dashboard','Leads','Pipeline','Clientes','Cotizaciones'];
+
+const ESTADOS = {
+  nuevo: {label:'Nuevo', color:'#185FA5'},
+  contactado: {label:'Contactado', color:'#BA7517'},
+  visitado: {label:'Visitado', color:'#6B3FA0'},
+  propuesta: {label:'Propuesta', color:'#3B6D11'},
+  ganado: {label:'Ganado', color:'#0F6E56'},
+  perdido: {label:'Perdido', color:'#A32D2D'}
+};
+
+// ── HELPERS ──
+const $ = id => document.getElementById(id);
+const fmt = n => n?.toLocaleString('es-CO') ?? '—';
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+window.cerrarModal = function(id) {
+  $(id).classList.remove('open');
+};
+
+// ── LOGIN ──
+window.doLogin = async function() {
+  const cedula = $('loginCedula').value.trim();
+  const nombre = $('loginNombre').value.trim();
+  const errEl = $('loginErr');
+  errEl.style.display = 'none';
+  if (!cedula || cedula.length < 5) { errEl.textContent = 'Ingresa un número de cédula válido.'; errEl.style.display = 'block'; return; }
+  if (!nombre || nombre.length < 3) { errEl.textContent = 'Ingresa tu nombre completo.'; errEl.style.display = 'block'; return; }
+
+  const userSnap = await getDoc(doc(db, 'usuarios', cedula));
+  let rol = 'vendedor';
+  if (userSnap.exists()) {
+    rol = userSnap.data().rol || 'vendedor';
+  } else {
+    const usersSnap = await getDocs(collection(db, 'usuarios'));
+    if (usersSnap.empty) rol = 'superadmin';
+  }
+  await setDoc(doc(db, 'usuarios', cedula), { cedula, nombre, ultimoAcceso: new Date().toISOString(), rol }, { merge: true });
+  currentUser = { cedula, nombre, rol };
+  sessionStorage.setItem('ravelCRMUser', JSON.stringify(currentUser));
+  mostrarApp();
+  await initData();
+};
+
+window.cerrarSesion = function() {
+  sessionStorage.removeItem('ravelCRMUser');
+  currentUser = null;
+  $('appWrap').style.display = 'none';
+  $('loginWrap').style.display = 'flex';
+};
+
+async function checkSession() {
+  const saved = sessionStorage.getItem('ravelCRMUser');
+  if (!saved) return false;
+  try {
+    const savedUser = JSON.parse(saved);
+    const freshSnap = await getDoc(doc(db, 'usuarios', savedUser.cedula));
+    if (freshSnap.exists()) savedUser.rol = freshSnap.data().rol || 'vendedor';
+    currentUser = savedUser;
+    sessionStorage.setItem('ravelCRMUser', JSON.stringify(currentUser));
+    return true;
+  } catch(e) { return false; }
+}
+
+function mostrarApp() {
+  $('loginWrap').style.display = 'none';
+  $('appWrap').style.display = 'block';
+  const initials = currentUser.nombre.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  $('userAvatar').textContent = initials;
+  const rolLbl = currentUser.rol === 'superadmin' ? ' · Admin' : currentUser.rol === 'gerente' ? ' · Gerente' : ' · Vendedor';
+  $('userNombreChip').textContent = currentUser.nombre.split(' ')[0] + rolLbl;
+}
+
+// ── INIT DATA ──
+async function initData() {
+  const [leadsSnap, actSnap, usersSnap] = await Promise.all([
+    getDocs(query(collection(db, 'crm_leads'), orderBy('ts', 'desc'))).catch(()=>getDocs(collection(db, 'crm_leads'))),
+    getDocs(collection(db, 'crm_actividades')).catch(()=>({docs:[]})),
+    getDocs(collection(db, 'usuarios'))
+  ]);
+
+  leads = leadsSnap.docs.map(d => ({id:d.id,...d.data()}));
+  actividades = actSnap.docs.map(d => ({id:d.id,...d.data()}));
+  usuariosLista = usersSnap.docs.map(d => ({id:d.id,...d.data()}));
+
+  $('subtitulo').textContent = `${leads.length} leads · ${currentUser.nombre.split(' ')[0]} · 2026`;
+  renderNav();
+  renderView();
+}
+
+// ── NAV ──
+function renderNav() {
+  const items = (currentUser.rol === 'superadmin' || currentUser.rol === 'gerente') ? NAVS_ADMIN : NAVS_VENDEDOR;
+  $('navBar').innerHTML = items.map(v =>
+    `<button class="${VIEW===v?'active':''}" onclick="setView('${v}')">${v}</button>`
+  ).join('');
+}
+
+window.setView = function(v) {
+  VIEW = v;
+  renderNav();
+  renderView();
+};
+
+function renderView() {
+  const el = $('content');
+  el.innerHTML = '<div class="loading">Cargando...</div>';
+  setTimeout(() => {
+    if (VIEW === 'Dashboard') el.innerHTML = renderDashboard();
+    else if (VIEW === 'Leads') el.innerHTML = renderLeads();
+    else if (VIEW === 'Pipeline') el.innerHTML = renderPipeline();
+    else if (VIEW === 'Clientes') el.innerHTML = renderClientes();
+    else if (VIEW === 'Cotizaciones') el.innerHTML = renderCotizaciones();
+    else if (VIEW === 'Reportes') el.innerHTML = renderReportes();
+    else if (VIEW === 'Usuarios') el.innerHTML = renderUsuarios();
+  }, 50);
+}
+
+// ── DASHBOARD ──
+function renderDashboard() {
+  const hoy = new Date();
+  const mes = hoy.getMonth();
+  const anio = hoy.getFullYear();
+
+  const leadsMes = leads.filter(l => {
+    if (!l.ts) return false;
+    const d = new Date(l.ts.seconds ? l.ts.seconds*1000 : l.ts);
+    return d.getMonth() === mes && d.getFullYear() === anio;
+  });
+
+  const ganados = leads.filter(l => l.estado === 'ganado');
+  const nuevos = leads.filter(l => l.estado === 'nuevo');
+  const propuestas = leads.filter(l => l.estado === 'propuesta');
+  const totalLeads = leads.length;
+  const tasaCierre = totalLeads > 0 ? Math.round(ganados.length/totalLeads*100) : 0;
+
+  // Funnel
+  const estados = ['nuevo','contactado','visitado','propuesta','ganado'];
+  const counts = estados.map(e => leads.filter(l=>l.estado===e).length);
+  const maxCount = Math.max(...counts, 1);
+
+  // Por vendedor
+  const porVendedor = {};
+  leads.forEach(l => {
+    const v = l.vendedor || 'Sin asignar';
+    if (!porVendedor[v]) porVendedor[v] = {total:0, ganados:0};
+    porVendedor[v].total++;
+    if (l.estado === 'ganado') porVendedor[v].ganados++;
+  });
+
+  return `
+  <div class="dash-grid">
+    <div class="dash-kpi">
+      <div class="label">Total Leads</div>
+      <div class="value" style="color:var(--blue)">${totalLeads}</div>
+      <div class="sub">${leadsMes.length} este mes</div>
+    </div>
+    <div class="dash-kpi">
+      <div class="label">Nuevos sin contactar</div>
+      <div class="value" style="color:var(--amber)">${nuevos.length}</div>
+      <div class="sub">Requieren atención</div>
+    </div>
+    <div class="dash-kpi">
+      <div class="label">En propuesta</div>
+      <div class="value" style="color:var(--purple)">${propuestas.length}</div>
+      <div class="sub">Por cerrar</div>
+    </div>
+    <div class="dash-kpi">
+      <div class="label">Tasa de cierre</div>
+      <div class="value" style="color:var(--green)">${tasaCierre}%</div>
+      <div class="sub">${ganados.length} ganados</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span>Embudo de conversión</span>
+      <span style="font-size:11px;color:var(--text-muted)">${totalLeads} leads totales</span>
+    </div>
+    <div style="padding:16px">
+      ${estados.map((e,i) => `
+        <div class="funnel-step">
+          <div class="funnel-label">${ESTADOS[e].label}</div>
+          <div class="funnel-bar-wrap">
+            <div class="funnel-bar" style="width:${counts[i]/maxCount*100}%;background:${ESTADOS[e].color}"></div>
+          </div>
+          <div class="funnel-count" style="color:${ESTADOS[e].color}">${counts[i]}</div>
+          <div class="funnel-pct">${totalLeads>0?Math.round(counts[i]/totalLeads*100):0}%</div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Desempeño por vendedor</div>
+    ${Object.entries(porVendedor).length > 0 ? Object.entries(porVendedor).map(([v,d]) => `
+      <div class="row">
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600">${v}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${d.total} leads · ${d.ganados} ganados</div>
+        </div>
+        <div style="font-size:14px;font-weight:700;color:var(--green)">${d.total>0?Math.round(d.ganados/d.total*100):0}%</div>
+      </div>
+    `).join('') : '<div class="empty">Sin datos aún</div>'}
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span>Leads por fuente</span>
+    </div>
+    ${renderFuenteChart()}
+  </div>`;
+}
+
+function renderFuenteChart() {
+  const fuentes = {};
+  leads.forEach(l => {
+    const f = l.fuente || 'Sin fuente';
+    fuentes[f] = (fuentes[f]||0)+1;
+  });
+  const sorted = Object.entries(fuentes).sort((a,b)=>b[1]-a[1]);
+  const max = sorted.length > 0 ? sorted[0][1] : 1;
+  if (sorted.length === 0) return '<div class="empty">Sin datos</div>';
+  return sorted.map(([f,c]) => `
+    <div class="row">
+      <div style="flex:1;font-size:13px">${f}</div>
+      <div style="width:120px">
+        <div class="bar-wrap"><div class="bar" style="width:${c/max*100}%"></div></div>
+      </div>
+      <div style="font-weight:700;font-size:13px;width:24px;text-align:right">${c}</div>
+    </div>
+  `).join('');
+}
+
+// ── LEADS ──
+function renderLeads() {
+  const esMiVista = currentUser.rol === 'vendedor';
+  const misLeads = esMiVista ? leads.filter(l => l.vendedor === currentUser.nombre) : leads;
+
+  return `
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div style="font-size:15px;font-weight:700">${misLeads.length} leads</div>
+    <button class="btn btn-sm" onclick="abrirModalNuevoLead()">+ Nuevo lead</button>
+  </div>
+  <div class="card">
+    ${misLeads.length > 0 ? misLeads.map(l => `
+      <div class="row" style="cursor:pointer" onclick="abrirDetalleLead('${l.id}')">
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600">${l.empresa || '—'}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${l.nombre || ''} ${l.telefono ? '· '+l.telefono : ''}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${l.fuente||''} · ${l.servicio||''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <span class="badge ${l.estado||'nuevo'}">${ESTADOS[l.estado||'nuevo']?.label||l.estado}</span>
+          <span style="font-size:10px;color:var(--text-muted)">${l.vendedor||'Sin asignar'}</span>
+        </div>
+      </div>
+    `).join('') : '<div class="empty">No hay leads. Agrega el primero.</div>'}
+  </div>`;
+}
+
+// ── PIPELINE ──
+function renderPipeline() {
+  const estados = ['nuevo','contactado','visitado','propuesta','ganado'];
+  const cols = estados.map(e => {
+    const items = leads.filter(l => (l.estado||'nuevo') === e);
+    return `
+      <div class="pipeline-col">
+        <div class="col-title" style="color:${ESTADOS[e].color}">${ESTADOS[e].label} (${items.length})</div>
+        ${items.map(l => `
+          <div class="pipeline-card" onclick="abrirDetalleLead('${l.id}')">
+            <div class="empresa">${l.empresa||'Sin empresa'}</div>
+            <div class="contacto">${l.nombre||''}${l.servicio?' · '+l.servicio:''}</div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:4px">${l.vendedor||'Sin asignar'}</div>
+          </div>
+        `).join('')}
+      </div>`;
+  });
+
+  return `
+  <div style="font-size:15px;font-weight:700;margin-bottom:14px">Pipeline comercial</div>
+  <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:16px">
+    ${cols.join('')}
+  </div>`;
+}
+
+// ── CLIENTES (leads ganados) ──
+function renderClientes() {
+  const clientes = leads.filter(l => l.estado === 'ganado');
+  return `
+  <div style="font-size:15px;font-weight:700;margin-bottom:14px">${clientes.length} clientes activos</div>
+  <div class="card">
+    ${clientes.length > 0 ? clientes.map(l => `
+      <div class="row" style="cursor:pointer" onclick="abrirDetalleLead('${l.id}')">
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600">${l.empresa||'—'}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${l.nombre||''} · ${l.servicio||''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <span class="badge ganado">Cliente ✅</span>
+          <button class="btn btn-sm" style="font-size:10px;padding:4px 10px" onclick="event.stopPropagation();abrirCotizacion('${l.id}')">Cotizar</button>
+        </div>
+      </div>
+    `).join('') : '<div class="empty">Aún no hay clientes cerrados.<br>Cambia el estado de un lead a "Ganado".</div>'}
+  </div>`;
+}
+
+// ── COTIZACIONES ──
+function renderCotizaciones() {
+  const leadsConCot = leads.filter(l => l.cotizaciones && l.cotizaciones.length > 0);
+  return `
+  <div style="font-size:15px;font-weight:700;margin-bottom:14px">Cotizaciones generadas</div>
+  ${leadsConCot.length > 0 ? leadsConCot.map(l => `
+    <div class="card">
+      <div class="card-header">
+        <span>${l.empresa||'—'}</span>
+        <span style="font-size:11px;color:var(--text-muted)">${l.cotizaciones.length} cotización(es)</span>
+      </div>
+      ${l.cotizaciones.map((c,i) => `
+        <div class="row">
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:600">${c.servicio}</div>
+            <div style="font-size:11px;color:var(--text-muted)">${c.fecha} · ${c.generadoPor}</div>
+          </div>
+          <button class="btn btn-sm btn-blue" style="font-size:11px" onclick="regenerarPDFGuardado('${l.id}',${i})">📥 PDF</button>
+        </div>
+      `).join('')}
+    </div>
+  `).join('') : '<div class="card"><div class="empty">No hay cotizaciones generadas aún.<br>Ve a un cliente y usa "Generar cotización".</div></div>'}
+  
+  <div style="margin-top:8px;text-align:center">
+    <button class="btn" onclick="setView('Clientes')">Ir a Clientes para cotizar</button>
+  </div>`;
+}
+
+// ── REPORTES ──
+function renderReportes() {
+  const totalLeads = leads.length;
+  const ganados = leads.filter(l=>l.estado==='ganado').length;
+  const perdidos = leads.filter(l=>l.estado==='perdido').length;
+  const activos = totalLeads - ganados - perdidos;
+  const tasaCierre = totalLeads > 0 ? (ganados/totalLeads*100).toFixed(1) : 0;
+
+  const porFuente = {};
+  leads.forEach(l => {
+    const f = l.fuente||'Sin fuente';
+    if (!porFuente[f]) porFuente[f] = {total:0, ganados:0};
+    porFuente[f].total++;
+    if (l.estado==='ganado') porFuente[f].ganados++;
+  });
+
+  const porVendedor = {};
+  leads.forEach(l => {
+    const v = l.vendedor||'Sin asignar';
+    if (!porVendedor[v]) porVendedor[v] = {total:0, ganados:0, perdidos:0};
+    porVendedor[v].total++;
+    if (l.estado==='ganado') porVendedor[v].ganados++;
+    if (l.estado==='perdido') porVendedor[v].perdidos++;
+  });
+
+  return `
+  <div style="font-size:15px;font-weight:700;margin-bottom:14px">Reportes comerciales</div>
+  
+  <div class="dash-grid">
+    <div class="dash-kpi"><div class="label">Total Leads</div><div class="value" style="color:var(--blue)">${totalLeads}</div></div>
+    <div class="dash-kpi"><div class="label">Ganados</div><div class="value" style="color:var(--green)">${ganados}</div></div>
+    <div class="dash-kpi"><div class="label">Perdidos</div><div class="value" style="color:var(--red)">${perdidos}</div></div>
+    <div class="dash-kpi"><div class="label">Tasa cierre</div><div class="value" style="color:var(--green)">${tasaCierre}%</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Conversión por fuente</div>
+    ${Object.entries(porFuente).map(([f,d]) => `
+      <div class="row">
+        <div style="flex:1"><div style="font-size:13px;font-weight:600">${f}</div><div style="font-size:11px;color:var(--text-muted)">${d.total} leads · ${d.ganados} cerrados</div></div>
+        <div style="font-size:14px;font-weight:700;color:var(--green)">${d.total>0?Math.round(d.ganados/d.total*100):0}%</div>
+      </div>
+    `).join('') || '<div class="empty">Sin datos</div>'}
+  </div>
+
+  <div class="card">
+    <div class="card-header">Conversión por vendedor</div>
+    ${Object.entries(porVendedor).map(([v,d]) => `
+      <div class="row">
+        <div style="flex:1"><div style="font-size:13px;font-weight:600">${v}</div><div style="font-size:11px;color:var(--text-muted)">${d.total} leads · ${d.ganados} ganados · ${d.perdidos} perdidos</div></div>
+        <div style="font-size:14px;font-weight:700;color:var(--green)">${d.total>0?Math.round(d.ganados/d.total*100):0}%</div>
+      </div>
+    `).join('') || '<div class="empty">Sin datos</div>'}
+  </div>`;
+}
+
+// ── USUARIOS ──
+function renderUsuarios() {
+  return `
+  <div style="font-size:15px;font-weight:700;margin-bottom:14px">Usuarios del CRM</div>
+  <div class="card">
+    ${usuariosLista.map(u => `
+      <div class="row">
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600">${u.nombre||u.id}</div>
+          <div style="font-size:11px;color:var(--text-muted)">Cédula: ${u.id}</div>
+        </div>
+        <select style="width:140px;font-size:12px;padding:5px 8px" onchange="cambiarRolCRM('${u.id}', this.value)">
+          <option value="vendedor" ${u.rol==='vendedor'?'selected':''}>Vendedor</option>
+          <option value="gerente" ${u.rol==='gerente'?'selected':''}>Gerente comercial</option>
+          <option value="superadmin" ${u.rol==='superadmin'?'selected':''}>Super Admin</option>
+          <option value="tecnico" ${u.rol==='tecnico'?'selected':''}>Técnico (solo mant.)</option>
+          <option value="conductor" ${u.rol==='conductor'?'selected':''}>Conductor</option>
+        </select>
+      </div>
+    `).join('')}
+  </div>`;
+}
+
+window.cambiarRolCRM = async function(cedula, nuevoRol) {
+  await updateDoc(doc(db, 'usuarios', cedula), { rol: nuevoRol });
+  const idx = usuariosLista.findIndex(u=>u.id===cedula);
+  if (idx>=0) usuariosLista[idx].rol = nuevoRol;
+  toast('Rol actualizado');
+};
+
+// ── MODAL NUEVO LEAD ──
+window.abrirModalNuevoLead = function() {
+  $('leadId').value = '';
+  $('modalLeadTitulo').textContent = 'Nuevo Lead';
+  $('leadNombre').value = '';
+  $('leadEmpresa').value = '';
+  $('leadTelefono').value = '';
+  $('leadEmail').value = '';
+  $('leadNotas').value = '';
+  $('leadFuente').value = 'WhatsApp';
+  $('leadServicio').value = 'Transporte escolar';
+  $('leadEstado').value = 'nuevo';
+
+  const sel = $('leadVendedor');
+  const vendedores = usuariosLista.filter(u => ['vendedor','gerente','superadmin'].includes(u.rol));
+  sel.innerHTML = vendedores.map(u => `<option value="${u.nombre||u.id}">${u.nombre||u.id}</option>`).join('');
+  if (currentUser) sel.value = currentUser.nombre;
+
+  $('modalLead').classList.add('open');
+};
+
+window.guardarLead = async function() {
+  const id = $('leadId').value;
+  const data = {
+    nombre: $('leadNombre').value.trim(),
+    empresa: $('leadEmpresa').value.trim(),
+    telefono: $('leadTelefono').value.trim(),
+    email: $('leadEmail').value.trim(),
+    fuente: $('leadFuente').value,
+    servicio: $('leadServicio').value,
+    estado: $('leadEstado').value,
+    vendedor: $('leadVendedor').value,
+    notas: $('leadNotas').value.trim(),
+    ts: new Date().getTime()
+  };
+
+  if (!data.nombre || !data.empresa) { toast('Nombre y empresa son obligatorios'); return; }
+
+  if (id) {
+    await updateDoc(doc(db, 'crm_leads', id), data);
+    const idx = leads.findIndex(l=>l.id===id);
+    if (idx>=0) leads[idx] = {...leads[idx], ...data};
+    toast('Lead actualizado');
+  } else {
+    const ref = await addDoc(collection(db, 'crm_leads'), data);
+    leads.unshift({id:ref.id,...data});
+    toast('Lead creado');
+  }
+
+  cerrarModal('modalLead');
+  renderView();
+};
+
+// ── DETALLE LEAD ──
+window.abrirDetalleLead = function(id) {
+  leadSeleccionado = leads.find(l=>l.id===id);
+  if (!leadSeleccionado) return;
+
+  $('leadId').value = id;
+  $('modalLeadTitulo').textContent = leadSeleccionado.empresa || 'Detalle Lead';
+  $('leadNombre').value = leadSeleccionado.nombre||'';
+  $('leadEmpresa').value = leadSeleccionado.empresa||'';
+  $('leadTelefono').value = leadSeleccionado.telefono||'';
+  $('leadEmail').value = leadSeleccionado.email||'';
+  $('leadFuente').value = leadSeleccionado.fuente||'WhatsApp';
+  $('leadServicio').value = leadSeleccionado.servicio||'Transporte escolar';
+  $('leadEstado').value = leadSeleccionado.estado||'nuevo';
+  $('leadNotas').value = leadSeleccionado.notas||'';
+
+  const sel = $('leadVendedor');
+  const vendedores = usuariosLista.filter(u => ['vendedor','gerente','superadmin'].includes(u.rol));
+  sel.innerHTML = vendedores.map(u => `<option value="${u.nombre||u.id}">${u.nombre||u.id}</option>`).join('');
+  sel.value = leadSeleccionado.vendedor||'';
+
+  $('modalLead').classList.add('open');
+};
+
+// ── ACTIVIDADES ──
+window.abrirModalActividad = function(leadId) {
+  $('actLeadId').value = leadId;
+  $('actTipo').value = 'llamada';
+  $('actResultado').value = 'Interesado';
+  $('actNotas').value = '';
+  $('actNuevoEstado').value = '';
+  $('modalActividad').classList.add('open');
+};
+
+window.guardarActividad = async function() {
+  const leadId = $('actLeadId').value;
+  const nuevoEstado = $('actNuevoEstado').value;
+  const data = {
+    leadId,
+    tipo: $('actTipo').value,
+    resultado: $('actResultado').value,
+    notas: $('actNotas').value.trim(),
+    vendedor: currentUser.nombre,
+    ts: new Date().getTime(),
+    fecha: new Date().toLocaleDateString('es-CO')
+  };
+
+  await addDoc(collection(db, 'crm_actividades'), data);
+  actividades.unshift(data);
+
+  if (nuevoEstado) {
+    await updateDoc(doc(db, 'crm_leads', leadId), { estado: nuevoEstado });
+    const idx = leads.findIndex(l=>l.id===leadId);
+    if (idx>=0) leads[idx].estado = nuevoEstado;
+  }
+
+  toast('Actividad registrada');
+  cerrarModal('modalActividad');
+  renderView();
+};
+
+// ── COTIZACIÓN CON IA ──
+window.abrirCotizacion = function(leadId) {
+  $('cotLeadId').value = leadId;
+  $('cotServicio').value = 'Transporte escolar';
+  $('cotPasajeros').value = '';
+  $('cotHorario').value = '';
+  $('cotRuta').value = '';
+  $('cotValor').value = '';
+  $('cotRequisitos').value = '';
+  $('cotPreview').value = '';
+  $('cotApiMsg').style.display = 'none';
+  $('modalCotizacion').classList.add('open');
+};
+
+window.generarCotizacion = async function() {
+  const leadId = $('cotLeadId').value;
+  const lead = leads.find(l=>l.id===leadId);
+  if (!lead) return;
+
+  const API_KEY = 'TU_API_KEY_AQUI';
+  if (API_KEY === 'TU_API_KEY_AQUI') {
+    $('cotApiMsg').style.display = 'block';
+    return;
+  }
+
+  const servicio = $('cotServicio').value;
+  const pasajeros = $('cotPasajeros').value;
+  const horario = $('cotHorario').value;
+  const ruta = $('cotRuta').value;
+  const valor = $('cotValor').value;
+  const requisitos = $('cotRequisitos').value;
+
+  if (!pasajeros || !horario) { toast('Completa pasajeros y horario'); return; }
+
+  const btn = $('btnGenerarCot');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Generando...';
+
+  const prompt = `Eres un experto en propuestas comerciales de transporte de pasajeros en Colombia.
+
+Genera una propuesta comercial PERSONALIZADA para:
+
+CLIENTE:
+- Empresa: ${lead.empresa}
+- Contacto: ${lead.nombre}
+- Servicio solicitado: ${servicio}
+
+DETALLES DEL SERVICIO:
+- Pasajeros: ${pasajeros}
+- Horario: ${horario}
+- Ruta: ${ruta || 'Por definir según necesidad'}
+- Valor mensual: ${valor ? '$' + Number(valor).toLocaleString('es-CO') : 'A cotizar'}
+- Requisitos especiales: ${requisitos || 'Ninguno'}
+
+SOBRE TRANSPORTE RAVEL S.A.S.:
+- Empresa de transporte especial de pasajeros en Medellín
+- Más de 25 años de experiencia
+- Flota propia de 28 vehículos (buses, microbuses, vans)
+- Valores: seguridad, puntualidad, confort
+
+INSTRUCCIONES:
+1. Saluda al contacto por su nombre
+2. Párrafo de presentación personalizado para su sector
+3. Descripción del servicio propuesto
+4. 3 beneficios diferenciadores de Ravel
+5. Cierre con llamada a la acción
+6. Máximo 4 párrafos
+7. Tono: profesional, cercano y confiable
+8. Idioma: español colombiano
+
+Responde ÚNICAMENTE con el texto de la propuesta.`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-calls': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 800,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    const texto = data.content?.[0]?.text || 'Error generando cotización';
+    $('cotPreview').value = texto;
+    $('cotApiMsg').style.display = 'none';
+    toast('Cotización generada ✅');
+  } catch(err) {
+    toast('Error: verifica tu API key');
+    console.error(err);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '✨ Generar con IA';
+};
+
+window.regenerarCotizacion = function() {
+  generarCotizacion();
+};
+
+window.guardarCotizacionManual = async function() {
+  const leadId = $('cotLeadId').value;
+  const texto = $('cotPreview').value.trim();
+  const lead = leads.find(l=>l.id===leadId);
+  if (!lead) return;
+  if (!texto) { toast('Escribe el texto de la propuesta primero'); return; }
+
+  if (!lead.cotizaciones) lead.cotizaciones = [];
+  lead.cotizaciones.push({
+    servicio: $('cotServicio').value,
+    texto,
+    valor: $('cotValor').value,
+    fecha: new Date().toLocaleDateString('es-CO'),
+    generadoPor: currentUser.nombre
+  });
+  await updateDoc(doc(db, 'crm_leads', leadId), { cotizaciones: lead.cotizaciones });
+  toast('Cotización guardada ✅');
+  cerrarModal('modalCotizacion');
+  renderView();
+};
+
+window.descargarPDF = function() {
+  const leadId = $('cotLeadId').value;
+  const lead = leads.find(l=>l.id===leadId);
+  const texto = $('cotPreview').value.trim();
+  if (!texto) { toast('Escribe primero el texto de la propuesta'); return; }
+  const valor = $('cotValor').value;
+  const servicio = $('cotServicio').value;
+  generarPDFCotizacion(lead, texto, valor, servicio);
+};
+
+window.regenerarPDFGuardado = function(leadId, idx) {
+  const lead = leads.find(l=>l.id===leadId);
+  if (!lead || !lead.cotizaciones?.[idx]) return;
+  const c = lead.cotizaciones[idx];
+  generarPDFCotizacion(lead, c.texto, c.valor, c.servicio);
+};
+
+function generarPDFCotizacion(lead, texto, valor, servicio) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const w = doc.internal.pageSize.getWidth();
+  const m = 20;
+
+  // Header verde
+  doc.setFillColor(15, 110, 86);
+  doc.rect(0, 0, w, 40, 'F');
+
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(22);
+  doc.text('TRANSPORTE RAVEL S.A.S.', m, 18);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text('Especialistas en Transporte Especial de Pasajeros · Medellín', m, 28);
+  doc.text('NIT: 900.xxx.xxx-x · Tel: (604) xxx-xxxx', m, 35);
+
+  // Datos del cliente
+  doc.setTextColor(26, 25, 22);
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('PROPUESTA COMERCIAL', m, 55);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text(`Señores: ${lead.empresa || ''}`, m, 65);
+  doc.text(`Att: ${lead.nombre || ''}`, m, 72);
+  doc.text(`Servicio: ${servicio}`, m, 79);
+  doc.text(`Fecha: ${new Date().toLocaleDateString('es-CO')}`, m, 86);
+  doc.text(`Referencia: PROP-${Date.now().toString().slice(-6)}`, m, 93);
+
+  doc.setDrawColor(224, 234, 240);
+  doc.line(m, 98, w-m, 98);
+
+  // Cuerpo de la propuesta
+  doc.setFontSize(11);
+  const lines = doc.splitTextToSize(texto, w - 2*m);
+  doc.text(lines, m, 108);
+
+  let yPos = 108 + (lines.length * 6);
+
+  // Valor si existe
+  if (valor) {
+    yPos += 10;
+    doc.setFillColor(234, 243, 222);
+    doc.roundedRect(m, yPos, w-2*m, 18, 3, 3, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(59, 109, 17);
+    doc.text(`Inversión mensual: $${Number(valor).toLocaleString('es-CO')}`, m+8, yPos+12);
+    doc.setTextColor(26, 25, 22);
+    yPos += 28;
+  }
+
+  // Footer
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(9);
+  doc.setTextColor(136, 146, 160);
+  doc.text('Propuesta válida por 15 días · Sujeta a disponibilidad de flota', m, yPos+10);
+  doc.text('Transporte Ravel S.A.S. · Medellín, Colombia', m, yPos+17);
+
+  doc.save(`Propuesta_${lead.empresa?.replace(/\s/g,'_')}_${new Date().getTime()}.pdf`);
+  toast('PDF descargado');
+}
+
+// ── INICIALIZAR ──
+async function iniciarApp() {
+  const haySesion = await checkSession();
+  if (haySesion && currentUser) {
+    mostrarApp();
+    await initData();
+  }
+}
+
+iniciarApp();
+</script>
+</body>
+</html>
