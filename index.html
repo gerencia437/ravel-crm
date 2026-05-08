@@ -195,16 +195,35 @@
         <div class="form-row">
           <label>Tipo de servicio</label>
           <select id="leadServicio">
-            <option>Transporte escolar</option>
-            <option>Transporte corporativo</option>
-            <option>Transporte industrial</option>
-            <option>Evento especial</option>
-            <option>Por definir</option>
+            <option>Empresarial</option>
+            <option>Turismo</option>
+            <option>Ocasional</option>
+            <option>Escolar</option>
           </select>
         </div>
         <div class="form-row">
           <label>Capacidad (pasajeros)</label>
           <input type="number" id="leadCapacidad" placeholder="Ej: 45"/>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <label>Tipo de vehículo</label>
+          <select id="leadVehiculo">
+            <option value="">Seleccionar</option>
+            <option>Automóvil</option>
+            <option>Micro Urvan</option>
+            <option>Master o Mercedes</option>
+            <option>Buseta</option>
+            <option>Bus</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Cantidad de vehículos</label>
+          <select id="leadCantidadVehiculos">
+            <option value="">Seleccionar</option>
+            ${Array.from({length:20},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join('')}
+          </select>
         </div>
       </div>
       <div class="form-grid">
@@ -235,13 +254,11 @@
         <div class="form-row">
           <label>Fuente del lead</label>
           <select id="leadFuente">
-            <option>WhatsApp</option>
-            <option>Google Ads</option>
-            <option>Meta/Instagram</option>
+            <option>WhatsApp Directo</option>
+            <option>Pauta</option>
             <option>Referido</option>
-            <option>Llamada directa</option>
-            <option>Visita directa</option>
-            <option>Otro</option>
+            <option>Cliente Antiguo</option>
+            <option>Gestión Comercial</option>
           </select>
         </div>
       </div>
@@ -347,10 +364,10 @@
         <div class="form-row">
           <label>Tipo de servicio</label>
           <select id="cotServicio">
-            <option>Transporte escolar</option>
-            <option>Transporte corporativo</option>
-            <option>Transporte industrial</option>
-            <option>Evento especial</option>
+            <option>Empresarial</option>
+            <option>Turismo</option>
+            <option>Ocasional</option>
+            <option>Escolar</option>
           </select>
         </div>
         <div class="form-row">
@@ -750,7 +767,7 @@ function renderLeads() {
           <div style="font-size:11px;color:var(--text-muted);margin-top:2px">
             ${l.fuente||''} · ${l.servicio||''}
             ${l.origen && l.destino ? ` · ${l.origen} → ${l.destino}` : ''}
-            ${l.capacidad ? ` · ${l.capacidad} pax` : ''}
+            ${l.capacidad ? ` · ${l.capacidad} pax` : ''}${l.vehiculo ? ` · ${l.vehiculo}` : ''}${l.cantidadVehiculos ? ` · ${l.cantidadVehiculos} veh` : ''}
             ${l.valorLead ? ` · $${Number(l.valorLead).toLocaleString('es-CO')}` : ''}
           </div>
         </div>
@@ -791,23 +808,31 @@ function renderPipeline() {
 // ── CLIENTES (leads ganados) ──
 function renderClientes() {
   const esVendedor = currentUser.rol === 'vendedor';
-  const clientes = leads.filter(l => l.estado === 'ganado' && (!esVendedor || l.vendedor === currentUser.nombre));
+  const clientes = esVendedor ? leads.filter(l => l.vendedor === currentUser.nombre) : leads;
   return `
-  <div style="font-size:15px;font-weight:700;margin-bottom:14px">${clientes.length} clientes activos</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div style="font-size:15px;font-weight:700">${clientes.length} clientes</div>
+  </div>
   <div class="card">
     ${clientes.length > 0 ? clientes.map(l => `
-      <div class="row" style="cursor:pointer" onclick="abrirDetalleLead('${l.id}')">
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:600">${l.empresa||'—'}</div>
-          <div style="font-size:11px;color:var(--text-muted)">${l.nombre||''} · ${l.servicio||''}</div>
+      <div class="row">
+        <div style="flex:1;cursor:pointer" onclick="abrirDetalleLead('${l.id}')">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+            ${l.numero ? `<span style="font-size:10px;font-weight:700;color:var(--green-text);background:var(--green-light);padding:2px 7px;border-radius:10px">${l.numero}</span>` : ''}
+            <span style="font-size:13px;font-weight:600">${l.empresa||'—'}</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted)">${l.nombre||''} · ${l.servicio||''} ${l.vehiculo ? '· '+l.vehiculo : ''}</div>
           <div style="font-size:11px;color:var(--text-muted)">${l.vendedor||''}</div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
-          <span class="badge ganado">Cliente ✅</span>
-          <button class="btn btn-sm" style="font-size:10px;padding:4px 10px" onclick="event.stopPropagation();abrirCotizacion('${l.id}')">Cotizar</button>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+          <span class="badge ${l.estado||'nuevo'}">${ESTADOS[l.estado||'nuevo']?.label||l.estado}</span>
+          <div style="display:flex;gap:5px">
+            <button class="btn btn-sm" style="font-size:10px;padding:4px 10px;background:var(--green)" onclick="abrirCotizacion('${l.id}')">📄 Cotizar</button>
+            <button class="btn btn-sm" style="font-size:10px;padding:4px 10px;background:#25D366" onclick="mensajeWhatsapp('${l.id}')">💬 WA</button>
+          </div>
         </div>
       </div>
-    `).join('') : '<div class="empty">Aún no hay clientes cerrados.<br>Cambia el estado de un lead a "Ganado".</div>'}
+    `).join('') : '<div class="empty">No hay clientes aún. Crea un lead para comenzar.</div>'}
   </div>`;
 }
 
@@ -1017,8 +1042,10 @@ window.abrirModalNuevoLead = async function() {
   $('leadTelefono').value = '';
   $('leadEmail').value = '';
   $('leadNotas').value = '';
-  $('leadFuente').value = 'WhatsApp';
-  $('leadServicio').value = 'Transporte escolar';
+  $('leadFuente').value = 'WhatsApp Directo';
+  $('leadServicio').value = 'Empresarial';
+  $('leadVehiculo').value = '';
+  $('leadCantidadVehiculos').value = '';
   $('leadEstado').value = 'nuevo';
   $('leadCapacidad').value = '';
   $('leadOrigen').value = '';
@@ -1067,6 +1094,8 @@ window.guardarLead = async function() {
     vendedor: $('leadVendedor').value,
     notas: $('leadNotas').value.trim(),
     capacidad: $('leadCapacidad').value || '',
+    vehiculo: $('leadVehiculo').value || '',
+    cantidadVehiculos: $('leadCantidadVehiculos').value || '',
     origen: $('leadOrigen').value.trim(),
     destino: $('leadDestino').value.trim(),
     fechaSalida: $('leadFechaSalida').value || '',
@@ -1107,10 +1136,12 @@ window.abrirDetalleLead = function(id) {
   $('leadTelefono').value = l.telefono||'';
   $('leadEmail').value = l.email||'';
   $('leadFuente').value = l.fuente||'WhatsApp';
-  $('leadServicio').value = l.servicio||'Transporte escolar';
+  $('leadServicio').value = l.servicio||'Empresarial';
   $('leadEstado').value = l.estado||'nuevo';
   $('leadNotas').value = l.notas||'';
   $('leadCapacidad').value = l.capacidad||'';
+  if($('leadVehiculo')) $('leadVehiculo').value = l.vehiculo||'';
+  if($('leadCantidadVehiculos')) $('leadCantidadVehiculos').value = l.cantidadVehiculos||'';
   $('leadOrigen').value = l.origen||'';
   $('leadDestino').value = l.destino||'';
   $('leadFechaSalida').value = l.fechaSalida||'';
@@ -1430,6 +1461,85 @@ function generarPDFCotizacion(lead, texto, valor, servicio) {
   toast('PDF descargado ✅');
 }
 
+// ── MENSAJE WHATSAPP ──
+window.mensajeWhatsapp = function(leadId) {
+  const lead = leads.find(l => l.id === leadId);
+  if (!lead) return;
+  const comercial = usuariosLista.find(u => u.nombre === currentUser.nombre) || {};
+  const celular = comercial.telefono || '';
+
+  const detalles = [
+    `📋 *Tipo de servicio:* ${lead.servicio || 'Por definir'}`,
+    lead.vehiculo ? `🚌 *Vehículo:* ${lead.vehiculo}` : null,
+    lead.cantidadVehiculos ? `🔢 *Cantidad:* ${lead.cantidadVehiculos} vehículo(s)` : null,
+    lead.capacidad ? `👥 *Pasajeros:* ${lead.capacidad}` : null,
+    (lead.origen && lead.destino) ? `📍 *Ruta:* ${lead.origen} → ${lead.destino}` : null,
+    lead.valorLead ? `💰 *Valor:* $${Number(lead.valorLead).toLocaleString('es-CO')}` : null,
+  ].filter(l => l !== null).join('\n');
+
+  const lineas = `Buen día, *${lead.nombre || 'estimado(a)'}* 👋
+
+Mi nombre es *${currentUser.nombre}*, del equipo comercial de *Transportes Ravel S.A.S.* 🚐
+
+Gracias por permitirnos ser parte de su solicitud de transporte. Para nosotros, cada servicio representa la confianza y tranquilidad de las personas que viajan con nosotros.
+
+A continuación, compartimos su propuesta:
+
+${detalles}
+
+En Transportes Ravel trabajamos para brindar un servicio seguro, puntual y humano, cuidando cada detalle para que usted y sus pasajeros viajen con total confianza.
+
+✨ _Ravel, donde quieras llegar._
+
+*${currentUser.nombre}*${celular ? '\n📞 ' + celular : ''}
+🌐 transravel.com`;
+
+  $('waTexto').value = lineas;
+  if (lead.telefono) {
+    const tel = lead.telefono.replace(/\D/g,'');
+    $('waLink').href = `https://wa.me/57${tel}?text=${encodeURIComponent(lineas)}`;
+    $('waLink').style.display = 'inline-flex';
+  } else {
+    $('waLink').style.display = 'none';
+  }
+  $('modalWhatsapp').classList.add('open');
+};
+
+window.copiarMensajeWA = function() {
+  navigator.clipboard.writeText($('waTexto').value).then(() => toast('Mensaje copiado ✅'));
+};
+
+// ── INICIALIZAR ──
+async function iniciarApp() {
+  const haySesion = await checkSession();
+  if (haySesion && currentUser) {
+    mostrarApp();
+    await initData();
+  }
+}
+iniciarApp();
 </script>
+
+<!-- MODAL WHATSAPP -->
+<div class="modal-bg" id="modalWhatsapp">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>💬 Mensaje para WhatsApp</h3>
+      <button onclick="cerrarModal('modalWhatsapp')" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted)">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label>Texto del mensaje</label>
+        <textarea id="waTexto" rows="14" style="font-size:12px;line-height:1.6"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="cerrarModal('modalWhatsapp')">Cerrar</button>
+      <button class="btn btn-sm" style="background:#128C7E" onclick="copiarMensajeWA()">📋 Copiar mensaje</button>
+      <a id="waLink" href="#" target="_blank" class="btn btn-sm" style="background:#25D366;text-decoration:none;display:none">📱 Abrir WhatsApp</a>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
